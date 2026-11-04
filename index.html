@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Мої адреси: встановлення</title>
+<style>
+  :root { --ink:#1d2939; --soft:#475467; --line:#d0d5dd; --bg:#f2f4f7; --card:#fff; --accent:#f5b80b; --blue:#175cd3; --green:#067647; --green-bg:#ecfdf3; --warn-bg:#fffaeb; --warn:#93370d; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:20px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:34px; line-height:1.2; margin:0 0 8px; }
+  .lead { margin:0 0 8px; color:var(--soft); }
+  .note { font-size:16px; color:var(--soft); margin:0 0 24px; }
+  .alert { display:none; background:var(--warn-bg); color:var(--warn); border:2px solid #fedf89; border-radius:12px; padding:14px 16px; margin:0 0 20px; font-weight:600; }
+  .step { background:var(--card); border-radius:16px; padding:20px; margin:0 0 16px; box-shadow:0 1px 4px rgba(16,24,40,.08); }
+  .step h2 { display:flex; align-items:center; gap:12px; font-size:24px; line-height:1.25; margin:0 0 12px; }
+  .num { flex:none; width:44px; height:44px; border-radius:50%; background:var(--accent); display:grid; place-items:center; font-weight:800; }
+  ol { margin:0; padding-left:26px; }
+  li { margin:0 0 10px; }
+  .go { display:block; text-align:center; background:var(--blue); color:#fff; font-weight:700; font-size:22px; text-decoration:none; padding:16px; border-radius:12px; margin:0 0 16px; }
+  .go:hover { background:#1849a9; }
+  .go:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  .ui { display:inline-block; background:#eef4ff; border:1px solid #b2ccff; border-radius:6px; padding:0 8px; font-weight:600; }
+  .ui.icon { padding:2px 6px; line-height:0; vertical-align:middle; }
+  .pic { display:flex; align-items:center; justify-content:space-between; gap:16px; border:2px solid var(--line); border-radius:12px; padding:14px 16px; margin:12px 0 0; font-size:18px; }
+  .switch { flex:none; width:58px; height:32px; border-radius:16px; background:var(--blue); position:relative; }
+  .switch::after { content:""; position:absolute; top:4px; right:4px; width:24px; height:24px; border-radius:50%; background:#fff; }
+  .ok { background:var(--green-bg); color:var(--green); border-radius:12px; padding:12px 16px; margin:12px 0 0; font-weight:600; }
+  details { background:var(--card); border-radius:16px; padding:16px 20px; }
+  summary { font-weight:700; cursor:pointer; }
+  details p { margin:12px 0 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Графіки відключень для кількох адрес</h1>
+  <p class="lead">Зробіть 4 кроки по порядку. Це займе близько 5 хвилин, потрібно робити лише один раз.</p>
+  <p class="note">Це безкоштовний користувацький додаток. Ваші адреси зберігаються лише у вашому браузері.</p>
+
+  <p class="alert" id="alert"></p>
+
+  <section class="step">
+    <h2><span class="num">1</span> Поставити Tampermonkey</h2>
+    <a class="go" id="tm" href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank" rel="noopener">Відкрити Tampermonkey</a>
+    <p style="margin:0">Додайте це розширення у браузер і поверніться сюди.</p>
+  </section>
+
+  <section class="step">
+    <h2><span class="num">2</span> Надати дозволи</h2>
+    <p style="margin:0 0 10px">Без цього кроку додаток не запрацює.</p>
+    <ol>
+      <li>Угорі праворуч у браузері натисніть значок <span class="ui icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg></span> (шматочок пазла).</li>
+      <li>Біля Tampermonkey натисніть три крапки <span class="ui">⋮</span>.</li>
+      <li>Виберіть <span class="ui">Керувати розширенням</span>.</li>
+      <li>Знайдіть рядок <span class="ui">Дозволити скрипти користувача</span> (англійською <span class="ui">Allow User Scripts</span>) і ввімкніть перемикач. Він має стати кольоровим, як на малюнку:</li>
+    </ol>
+    <div class="pic" role="img" aria-label="Приклад увімкненого перемикача"><span>Дозволити скрипти користувача</span><span class="switch"></span></div>
+  </section>
+
+  <section class="step">
+    <h2><span class="num">3</span> Поставити додаток</h2>
+    <a class="go" href="https://raw.githubusercontent.com/code-roman/voe_extended/main/voe-multi.user.js">Поставити «Мої адреси»</a>
+    <ol>
+      <li>Натисніть синю кнопку вище.</li>
+      <li>На сторінці, що відкриється, натисніть <span class="ui">Встановити</span>.</li>
+    </ol>
+  </section>
+
+  <section class="step">
+    <h2><span class="num">4</span> Додати свою адресу</h2>
+    <a class="go" href="https://disconnection.voe.com.ua/" target="_blank" rel="noopener">Відкрити сайт відключень</a>
+    <ol>
+      <li>На сайті вгорі з'явився блок <b>Мої адреси</b>.</li>
+      <li>У звичайній формі сайту нижче знайдіть свою адресу або особовий рахунок.</li>
+      <li>У блоці <b>Мої адреси</b> напишіть назву, наприклад «Дім».</li>
+      <li>Натисніть <span class="ui">Додати поточний пошук</span>.</li>
+      <li>Для кожної наступної адреси повторіть пункти 2–4.</li>
+    </ol>
+    <p class="ok">Готово! Тепер просто відкривайте сайт відключень. Усі ваші адреси будуть одразу вгорі, а нові версії додатка поставляться самі.</p>
+  </section>
+
+  <details>
+    <summary>Не з'явився блок «Мої адреси»?</summary>
+    <p>1. Перевірте, чи ввімкнений перемикач із кроку 2.</p>
+    <p>2. Закрийте браузер, відкрийте його знову й зайдіть на сайт відключень.</p>
+    <p>3. Якщо не допомогло, <a href="https://github.com/code-roman/voe_extended/issues" target="_blank" rel="noopener">напишіть на GitHub</a>.</p>
+  </details>
+</main>
+<script>
+  // Підказки під браузер: Edge має власний магазин, а на телефонах і в інших браузерах ці кроки не спрацюють
+  (function () {
+    var ua = navigator.userAgent, alertBox = document.getElementById('alert');
+    function warn(text) { alertBox.textContent = text; alertBox.style.display = 'block'; }
+    if (/Android|iPhone|iPad|Mobile/i.test(ua)) {
+      warn('Це працює лише на комп’ютері. Відкрийте цю сторінку на комп’ютері в Chrome або Edge.');
+    } else if (/Edg\//.test(ua)) {
+      document.getElementById('tm').href = 'https://microsoftedge.microsoft.com/addons/detail/iikmkjmpaadaobahmlepeloendndfphd';
+    } else if (!/Chrome\//.test(ua)) {
+      warn('Ця інструкція для браузерів Chrome та Edge. Відкрийте цю сторінку в одному з них.');
+    }
+  })();
+</script>
+</body>
+</html>
