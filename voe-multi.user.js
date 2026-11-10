@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VOE: мої адреси
 // @namespace    voe-multi
-// @version      1.0.0
+// @version      1.0.1
 // @description  Зведені графіки відключень для кількох адрес/рахунків + підсвітка змін з минулого перегляду
 // @match        https://disconnection.voe.com.ua/*
 // @updateURL    https://raw.githubusercontent.com/code-roman/voe_extended/main/voe-multi.user.js
@@ -124,7 +124,7 @@
       credentials: 'same-origin',
       headers: {'X-Requested-With': 'XMLHttpRequest'},
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res.ok) throw Object.assign(new Error('HTTP ' + res.status), {status: res.status});
     const data = await res.json();
     if (!data.ok) {
       const m = data.message;
@@ -336,11 +336,18 @@
       const data = await fetchEntry(e);
       // Відповідь застаріла (був новіший запит) або запис уже видалили
       if (seq !== requestSeq[e.id] || !store.entries.includes(e)) return;
+      sessionExpired = false;
       next = {addresses: data.addresses && Object.keys(data.addresses).length > 1 ? data.addresses : null};
       applySnapshot(e, normalize(data));
     } catch (err) {
       if (seq !== requestSeq[e.id] || !store.entries.includes(e)) return;
-      next = {error: err.message || String(err)};
+      if (err.status === 403) {
+        // Про це повідомляє окрема плашка над списком; збережені дані картки лишаємо як є
+        sessionExpired = true;
+        next = {addresses: runtime[e.id]?.addresses};
+      } else {
+        next = {error: err.message || String(err)};
+      }
     }
     runtime[e.id] = next;
     render();
@@ -350,14 +357,35 @@
   async function refreshAll() {
     if (refreshing) return;
     refreshing = true;
+    sessionExpired = false;
     try {
       // По черзі, щоб не смикати сервер паралельно
       for (const e of [...store.entries]) {
         if (store.entries.includes(e)) await refreshOne(e);
+        if (sessionExpired) break; // решта запитів теж отримає 403
       }
     } finally {
       refreshing = false;
+      render();
     }
+  }
+
+  // ---------- застаріла сесія ----------
+  // Коли сторінка довго відкрита, сайт починає відповідати 403, і допомагає лише перезавантаження.
+  let sessionExpired = false;
+  const RELOAD_KEY = 'voeMulti.reloadAt';
+  function reloadPage() {
+    try { sessionStorage.setItem(RELOAD_KEY, String(Date.now())); } catch (_) { /* без сховища просто перезавантажуємо */ }
+    location.reload();
+  }
+  // Захист від циклу: якщо щойно перезавантажували, а 403 лишився, автоматично більше не перезавантажуємо
+  function reloadedRecently() {
+    try { return Date.now() - Number(sessionStorage.getItem(RELOAD_KEY) || 0) < 60000; } catch (_) { return true; }
+  }
+  async function onRefreshClick() {
+    if (sessionExpired && !reloadedRecently()) return reloadPage();
+    await refreshAll();
+    if (sessionExpired && !reloadedRecently()) reloadPage();
   }
 
   // ---------- відмальовка ----------
@@ -473,11 +501,15 @@
   const nameInput = h('input', {type: 'text', placeholder: 'Назва, напр. «Дім»', maxlength: '40'});
   const addMsg = h('span', {class: 'vm-desc'});
   nameInput.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); addCurrent(nameInput, addMsg); } });
+  const notice = h('div', {class: 'vm-alert', hidden: true},
+    h('span', null, h('strong', null, 'Сайт перестав відповідати.'), ' Перезавантажте сторінку, щоб побачити свіжі графіки.'),
+    h('button', {class: 'vm-btn primary', onclick: reloadPage}, 'Перезавантажити сторінку'));
 
   const panel = h('section', {id: 'vm-panel'},
     h('div', {class: 'vm-top'},
       h('h2', null, 'Мої адреси'),
-      h('button', {class: 'vm-btn', onclick: refreshAll}, 'Оновити')),
+      h('button', {class: 'vm-btn', onclick: onRefreshClick}, 'Оновити')),
+    notice,
     list,
     h('div', {class: 'vm-legend'},
       h('span', null, h('i', {class: 'vm-off l2'}), 'заплановано'),
@@ -492,6 +524,7 @@
       addMsg));
 
   function render() {
+    notice.hidden = !sessionExpired;
     list.replaceChildren(...(store.entries.length
       ? store.entries.map(renderEntry)
       : [h('div', {class: 'vm-desc vm-empty'}, 'Список порожній. Знайди рахунок, EIC або адресу у формі нижче, дай назву і натисни «Додати поточний пошук».')]));
@@ -540,6 +573,9 @@
 .vm-txt-add{color:#b42318}.vm-txt-rem{color:#067647}
 .vm-none{color:#067647;margin-top:6px}
 .vm-err{color:#b42318;font-size:13px;margin-top:4px}
+.vm-alert{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:#fef3f2;border:1px solid #fecdca;color:#b42318;border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:15px}
+.vm-alert[hidden]{display:none}
+.vm-alert .vm-btn{margin-left:auto}
 .vm-legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:#667085;margin:4px 0 12px}
 .vm-legend span{display:inline-flex;align-items:center;gap:5px}
 .vm-legend i{display:inline-block;width:14px;height:12px;border-radius:2px}
